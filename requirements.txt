@@ -1,0 +1,8 @@
+python-dotenv
+langchain-community
+langchain-text-splitters
+langchain-openai
+langchain-qdrant
+openai
+qdrant-client
+pypdf
