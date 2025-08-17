@@ -1,0 +1,114 @@
+<mat-card class="document-table-card">
+  <mat-card-header>
+    <mat-card-title>Document Library</mat-card-title>
+    <mat-card-subtitle>Manage your uploaded documents</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Search Filter -->
+    <div class="filter-container">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search documents</mat-label>
+        <input matInput (keyup)="applyFilter($event)" placeholder="Search by name, type, etc.">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <!-- Table Container -->
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
+        
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="name-column"> 
+            <mat-icon class="header-icon">description</mat-icon>
+            Name 
+          </th>
+          <td mat-cell *matCellDef="let doc" class="name-cell"> 
+            <div class="file-info">
+              <mat-icon class="file-icon">{{getFileIcon(doc.type)}}</mat-icon>
+              <span class="file-name">{{doc.name}}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Type Column -->
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> 
+            <mat-icon class="header-icon">category</mat-icon>
+            Type 
+          </th>
+          <td mat-cell *matCellDef="let doc"> 
+            <span class="type-badge" [class]="'type-' + doc.type.toLowerCase()">
+              {{doc.type}}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Size Column -->
+        <ng-container matColumnDef="size">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> 
+            <mat-icon class="header-icon">data_usage</mat-icon>
+            Size 
+          </th>
+          <td mat-cell *matCellDef="let doc"> {{formatSize(doc.size)}} </td>
+        </ng-container>
+
+        <!-- Upload Date Column -->
+        <ng-container matColumnDef="uploadDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> 
+            <mat-icon class="header-icon">schedule</mat-icon>
+            Upload Date 
+          </th>
+          <td mat-cell *matCellDef="let doc"> {{doc.uploadDate | date:'medium'}} </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-header"> 
+            <mat-icon class="header-icon">settings</mat-icon>
+            Actions 
+          </th>
+          <td mat-cell *matCellDef="let doc" class="actions-cell">
+            <div class="action-buttons">
+              <button 
+                mat-icon-button 
+                color="primary" 
+                (click)="previewDocument(doc)"
+                matTooltip="Preview document"
+                class="action-btn">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button 
+                mat-icon-button 
+                color="warn" 
+                (click)="deleteDocument(doc)"
+                matTooltip="Delete document"
+                class="action-btn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns" class="table-header"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+      </table>
+
+      <!-- No Data Message -->
+      <div *ngIf="dataSource.data.length === 0" class="no-data">
+        <mat-icon class="no-data-icon">folder_open</mat-icon>
+        <h3>No documents found</h3>
+        <p>Upload some documents to get started</p>
+      </div>
+    </div>
+
+    <!-- Paginator -->
+    <mat-paginator
+      [pageSize]="10"
+      [pageSizeOptions]="[5, 10, 20, 50]"
+      showFirstLastButtons
+      aria-label="Select page of documents">
+    </mat-paginator>
+  </mat-card-content>
+</mat-card>

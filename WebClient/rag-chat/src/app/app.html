@@ -1,0 +1,39 @@
+<div class="app-container">
+  <mat-toolbar class="app-toolbar">
+    <button mat-icon-button (click)="toggleSidenav()" aria-label="Toggle navigation">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span class="app-title">{{title}}</span>
+    <div class="toolbar-spacer"></div>
+    <button mat-icon-button aria-label="Settings">
+      <mat-icon>settings</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="app-sidenav-container">
+    <mat-sidenav 
+      [opened]="isSidenavOpen" 
+      [mode]="isMobile ? 'over' : 'side'" 
+      class="app-sidenav"
+      [class.app-sidenav-open]="isSidenavOpen">
+      <mat-nav-list>
+        @for (item of navItems; track item.path) {
+          <a mat-list-item 
+             [routerLink]="item.path"
+             routerLinkActive="active-link"
+             class="nav-item"
+             (click)="onNavItemClick()">
+            <mat-icon matListItemIcon>{{item.icon}}</mat-icon>
+            <span matListItemTitle class="nav-label">{{item.label}}</span>
+          </a>
+        }
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content [class.content-shifted]="isSidenavOpen && !isMobile">
+      <div class="content-container">
+        <router-outlet></router-outlet>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

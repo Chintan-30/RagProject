@@ -1,0 +1,124 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.app-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  background-color: #ffffff !important;
+  color: #2c3e50;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 64px;
+
+  .app-title {
+    margin-left: 16px;
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .toolbar-spacer {
+    flex: 1 1 auto;
+  }
+}
+
+.app-sidenav-container {
+  flex: 1;
+  margin-top: 64px;
+  background-color: #f8f9fa;
+
+  .app-sidenav {
+    width: 250px;
+    background-color: #ffffff;
+    border-right: 1px solid rgba(0, 0, 0, 0.12);
+    transition: width 0.3s ease;
+
+    &:not(.app-sidenav-open) {
+      width: 60px;
+
+      .nav-label {
+        display: none;
+      }
+    }
+  }
+
+  .nav-item {
+    color: #2c3e50;
+    transition: background-color 0.2s ease;
+    margin: 4px 8px;
+    border-radius: 8px;
+
+    &:hover {
+      background-color: #e9ecef;
+    }
+
+    &.active-link {
+      background-color: #e7f1ff;
+      color: #0d6efd;
+
+      mat-icon {
+        color: #0d6efd;
+      }
+    }
+
+    mat-icon {
+      color: #6c757d;
+      margin-right: 12px;
+    }
+
+    .nav-label {
+      font-weight: 500;
+    }
+  }
+
+  mat-sidenav-content {
+    transition: margin-left 0.3s ease;
+    overflow-x: hidden;
+
+    &.content-shifted {
+      margin-left: 250px;
+    }
+
+    .content-container {
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      min-height: calc(100vh - 64px);
+    }
+  }
+}
+
+// Mobile responsiveness
+@media (max-width: 768px) {
+  .app-sidenav-container {
+    .app-sidenav {
+      width: 280px; // Slightly wider on mobile for better touch targets
+    }
+
+    mat-sidenav-content {
+      .content-container {
+        padding: 16px;
+      }
+    }
+  }
+
+  .app-toolbar {
+    .app-title {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+  .app-sidenav,
+  mat-sidenav-content,
+  .nav-item {
+    transition: none;
+  }
+}
