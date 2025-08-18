@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { catchError, Observable, of, retry, throwError } from 'rxjs';
 
 export interface Document {
   id: string;
@@ -17,7 +17,7 @@ export interface Document {
 export class DocumentService {
   private documents: Document[] = [];
   apiURL: string = 'http://localhost:8000';
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   uploadDocument(
     file: File,
@@ -34,7 +34,7 @@ export class DocumentService {
       .set('chunk_overlap', chunkOverlap.toString())
       .set('collection_name', collectionName || '');
 
-    return this.http.post<Document>(this.apiURL+'/indexing/upload', formData, {
+    return this.http.post<Document>(this.apiURL + '/indexing/upload', formData, {
       params: params
     });
   }
@@ -47,16 +47,77 @@ export class DocumentService {
       .set('page_number', pageNumber.toString())
       .set('page_size', pageSize.toString());
 
-    return this.http.get<Document[]>(`${this.apiURL}/files/`, { params });
+    return this.http.get<Document[]>(`${this.apiURL}/files/`, { params }).pipe(
+      retry(2), // Retry up to 2 times on error
+      catchError(this.handleError)
+    );
   }
+
+getDocumentBlob(filePath: string): Observable<Blob> {
+  const encodedPath = encodeURIComponent(filePath);
+  return this.http.get(`${this.apiURL}/files/blob?path=${encodedPath}`, {
+    responseType: 'blob'
+  });
+}
 
 
   getDocumentById(id: string): Observable<any> {
-    return this.http.get<any>(`${this.apiURL}/files/${id}`);
+    return this.http.get<any>(`${this.apiURL}/files/${id}`).pipe(
+      retry(2), // Retry up to 2 times on error
+      catchError(this.handleError)
+    );
   }
 
   deleteDocument(id: string): Observable<void> {
-    // TODO: Replace with actual API call ssbbbs
+    // TODO: Replace with actual API call
     return this.http.delete<void>(`/api/documents/${id}`);
   }
+
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    let errorResponse: any;
+
+    if (error.error instanceof ErrorEvent) {
+      // Client-side error
+      errorResponse = {
+        code: 'CLIENT_ERROR',
+        message: 'A network error occurred. Please check your connection.',
+        details: error.error.message
+      };
+    } else {
+      // Server-side error
+      switch (error.status) {
+        case 404:
+          errorResponse = {
+            code: 'NOT_FOUND',
+            message: 'Document not found',
+            details: error.error
+          };
+          break;
+        case 403:
+          errorResponse = {
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to access this document',
+            details: error.error
+          };
+          break;
+        case 500:
+          errorResponse = {
+            code: 'SERVER_ERROR',
+            message: 'Server error occurred. Please try again later.',
+            details: error.error
+          };
+          break;
+        default:
+          errorResponse = {
+            code: 'UNKNOWN_ERROR',
+            message: `An error occurred: ${error.message}`,
+            details: error.error
+          };
+      }
+    }
+
+    console.error('Document service error:', errorResponse);
+    return throwError(() => errorResponse);
+  }
+
 }

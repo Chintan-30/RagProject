@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -106,6 +106,7 @@ interface ChatMessage {
 export class ChatInterfaceComponent {
   messages: ChatMessage[] = [];
   newMessage = '';
+  @Input() documentId: string = '';
 
   sendMessage() {
     if (!this.newMessage.trim()) return;

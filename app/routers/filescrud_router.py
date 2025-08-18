@@ -4,6 +4,11 @@ from pydantic import BaseModel
 from datetime import datetime
 import logging
 from sqlalchemy import select
+from fastapi.responses import StreamingResponse
+import os
+from urllib.parse import unquote
+import mimetypes
+
 
 # Import your DBService
 from app.services.dbservices import Document, get_db_service, DBService
@@ -56,6 +61,54 @@ async def get_all_documents(
         logger.error(f"Error fetching documents: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching documents: {str(e)}")
 
+@router.get("/blob")
+async def get_file_blob_stream(path: str = Query(...)):
+    print(f"XXXXXXXXXXXXXReceived path: {path}")  # Debug print
+    # Decode the file path
+    file_path = unquote(path)
+    
+    # Extract only the filename from the path
+    filename = os.path.basename(file_path)
+    
+    # Construct the full path - use forward slashes or raw string
+    full_path = f"C:/filestorage/ragchat/{filename}"
+    # OR use os.path.normpath to handle path separators
+    # full_path = os.path.normpath(os.path.join("C:/", "filestorage", "ragchat", filename))
+    
+    print(f"Looking for file: {full_path}")  # Debug print
+    
+    # Check if file exists
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Check if it's actually a file
+    if not os.path.isfile(full_path):
+        raise HTTPException(status_code=404, detail="Path is not a file")
+    
+    # Determine content type
+    content_type, _ = mimetypes.guess_type(full_path)
+    if not content_type:
+        content_type = "application/pdf"
+    
+    # Generator function to stream file
+    def file_generator():
+        with open(full_path, "rb") as file:
+            while chunk := file.read(8192):  # Read in 8KB chunks
+                yield chunk
+    
+    # Get file size for Content-Length header
+    file_size = os.path.getsize(full_path)
+    
+    return StreamingResponse(
+        file_generator(),
+        media_type=content_type,
+        headers={
+            "Content-Length": str(file_size),
+            "Content-Disposition": f"inline; filename={os.path.basename(full_path)}"
+        }
+    )
+
+
 @router.get("/{document_id}", response_model=DocumentResponse)
 async def get_document_by_id(
     document_id: str,
@@ -104,3 +157,4 @@ async def get_document_by_id(self, document_id: str):
             select(Document).where(Document.id == document_id)
         )
         return result.scalars().first()
+    

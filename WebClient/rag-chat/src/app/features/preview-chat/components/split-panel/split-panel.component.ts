@@ -20,11 +20,13 @@ import { DocumentService } from '../../../../shared/services/document.service';
   template: `
     <mat-sidenav-container class="container">
       <mat-sidenav-content class="document-view">
-        <app-document-viewer [documentPath]="documentPath"></app-document-viewer>
+        <app-document-viewer 
+          [documentId]="documentId">
+        </app-document-viewer>
       </mat-sidenav-content>
       
       <mat-sidenav #chatDrawer position="end" mode="side" opened class="chat-panel">
-        <app-chat-interface></app-chat-interface>
+        <app-chat-interface [documentId]="documentId"></app-chat-interface>
       </mat-sidenav>
     </mat-sidenav-container>
   `,
@@ -45,21 +47,35 @@ import { DocumentService } from '../../../../shared/services/document.service';
   `]
 })
 export class SplitPanelComponent implements OnInit {
-  documentPath: string= '';
-  constructor(private route: ActivatedRoute,private documentService: DocumentService) {}
+  documentPath: string = '';
+  documentId: string = '';
+  isLoading: boolean = true;
+
+  constructor(
+    private route: ActivatedRoute,
+    private documentService: DocumentService
+  ) {}
 
   ngOnInit() {
     this.route.params.subscribe(params => {
-      const documentId = params['id'];
-      // TODO: Load document using document service
-      console.log('Loading document:', documentId);
-      this.getDocumentById(documentId);
+      this.documentId = params['id'];
+      console.log('Loading document:', this.documentId);
+      this.getDocumentById(this.documentId);
     });
   }
 
   getDocumentById(documentId: string) {
-    this.documentService.getDocumentById(documentId).subscribe((response: any) => {
+    this.isLoading = true;
+    this.documentService.getDocumentById(documentId).subscribe({
+      next: (response: any) => {
         this.documentPath = response.storage_path;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading document:', error);
+        this.isLoading = false;
+        this.documentPath = ''; // Clear path on error
+      }
     });
   }
 }
