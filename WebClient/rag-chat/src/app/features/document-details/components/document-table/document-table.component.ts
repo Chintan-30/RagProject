@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -10,13 +10,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
+import { DocumentService } from '../../../../shared/services/document.service';
 
 interface DocumentInfo {
   id: string;
-  name: string;
-  type: string;
-  size: number;
-  uploadDate: Date;
+  collection_name?: string;
+  filename?: string;
+  document_count?: number;
+  chunk_count?: number;
+  file_size?: number;
+  upload_date?: string;
+  storage_path?: string;
 }
 
 @Component({
@@ -38,45 +42,43 @@ interface DocumentInfo {
   styleUrls: ['./document-table.scss']
 })
 export class DocumentTableComponent implements OnInit, AfterViewInit {
-  displayedColumns: string[] = ['name', 'type', 'size', 'uploadDate', 'actions'];
+  displayedColumns: string[] = [
+    'filename',
+    'collection_name',
+    'document_count',
+    'chunk_count',
+    'file_size',
+    'upload_date',
+    'actions'
+  ];
+
   dataSource: MatTableDataSource<DocumentInfo>;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  constructor(private router: Router) {
+  pageNumber: number = 1;
+  pageSize: number = 5;
+  totalRecords: number = 0;
+  constructor(private router: Router, private documentService: DocumentService) {
     this.dataSource = new MatTableDataSource<DocumentInfo>();
   }
 
   ngOnInit() {
-    const sampleData: DocumentInfo[] = [
-      {
-        id: '1',
-        name: 'Annual Report 2024.pdf',
-        type: 'PDF',
-        size: 2.5 * 1024 * 1024,
-        uploadDate: new Date('2024-01-15')
-      },
-      {
-        id: '2',
-        name: 'Project Guidelines.docx',
-        type: 'DOCX',
-        size: 1.2 * 1024 * 1024,
-        uploadDate: new Date('2024-02-10')
-      },
-      {
-        id: '3',
-        name: 'Data Analysis.xlsx',
-        type: 'XLSX',
-        size: 856 * 1024,
-        uploadDate: new Date('2024-03-05')
-      }
-    ];
-    this.dataSource.data = sampleData;
+    this.dataSource.paginator = this.paginator;
+    this.getAllDocuments(this.pageNumber, this.pageSize);
   }
 
+  getAllDocuments(pageNumber: number, pageSize: number) {
+  this.documentService.getAllDocuments(pageNumber, pageSize)
+    .subscribe((res: any) => {
+      this.dataSource.data = res.doc_details;   // actual items
+      this.totalRecords = res.TotalRecords;     // total count from backend
+    });
+}
+
+
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
 
@@ -93,7 +95,7 @@ export class DocumentTableComponent implements OnInit, AfterViewInit {
   }
 
   deleteDocument(doc: DocumentInfo) {
-    if (confirm(`Are you sure you want to delete "${doc.name}"?`)) {
+    if (confirm(`Are you sure you want to delete "${doc.collection_name}"?`)) {
       const index = this.dataSource.data.findIndex(d => d.id === doc.id);
       if (index > -1) {
         const newData = [...this.dataSource.data];
@@ -111,6 +113,14 @@ export class DocumentTableComponent implements OnInit, AfterViewInit {
       this.dataSource.paginator.firstPage();
     }
   }
+
+  onPageChange(event: PageEvent) {
+    this.pageNumber = event.pageIndex + 1; // Angular is 0-based, backend likely 1-based
+    this.pageSize = event.pageSize;
+
+    this.getAllDocuments(this.pageNumber, this.pageSize);
+  }
+
 
   getFileIcon(type: string): string {
     switch (type.toLowerCase()) {

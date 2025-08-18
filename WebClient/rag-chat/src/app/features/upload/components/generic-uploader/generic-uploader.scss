@@ -1,0 +1,68 @@
+
+    .uploader-card {
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    
+    :host ::ng-deep .ngx-file-drop__drop-zone {
+      border: 2px dashed #ccc;
+      border-radius: 4px;
+      padding: 20px;
+      text-align: center;
+      background: #fafafa;
+      margin: 10px 0;
+    }
+
+    :host ::ng-deep .ngx-file-drop__content {
+      color: #666;
+    }
+
+    .upload-progress {
+      margin-top: 20px;
+    }
+
+    .upload-item {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+
+    .upload-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .file-name {
+      font-weight: 500;
+    }
+
+    .upload-status {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .upload-status.uploading {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .upload-status.success {
+      background: #d1edff;
+      color: #0c5460;
+    }
+
+    .upload-status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .error-message {
+      color: #721c24;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+  

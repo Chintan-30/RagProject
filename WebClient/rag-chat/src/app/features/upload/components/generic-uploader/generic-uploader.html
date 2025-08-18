@@ -1,1 +1,49 @@
-<p>generic-uploader works!</p>
+    <mat-card class="uploader-card">
+      <mat-card-header>
+        <mat-card-title>Upload Documents</mat-card-title>
+        <mat-card-subtitle>Drag and drop files or click to browse</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ngx-file-drop
+          dropZoneLabel="Drop files here"
+          (onFileDrop)="dropped($event)"
+          [showBrowseBtn]="true"
+          browseBtnLabel="Choose files"
+          [multiple]="true"
+          accept=".pdf,.txt,.csv,.xlsx">
+          <ng-template ngx-file-drop-content-tmp let-openFileSelector="openFileSelector">
+            <button mat-raised-button color="primary" (click)="openFileSelector()">
+              Choose Files
+            </button>
+          </ng-template>
+        </ngx-file-drop>
+        
+        <!-- Upload Progress Section -->
+        @if (uploads.length > 0) {
+          <div class="upload-progress">
+            <h3>Upload Progress</h3>
+            @for (upload of uploads; track upload.id) {
+              <div class="upload-item">
+                <div class="upload-info">
+                  <span class="file-name">{{ upload.fileName }}</span>
+                  <span class="upload-status" [ngClass]="upload.status">
+                    {{ getStatusText(upload.status) }}
+                  </span>
+                </div>
+                @if (upload.status === 'uploading') {
+                  <mat-progress-bar 
+                    mode="indeterminate">
+                  </mat-progress-bar>
+                }
+                @if (upload.status === 'error') {
+                  <div class="error-message">
+                    Upload failed. Please try again.
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+{{this.uploads | json}}

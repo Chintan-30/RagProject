@@ -5,6 +5,7 @@ import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { ActivatedRoute } from '@angular/router';
 import { DocumentViewerComponent } from '../document-viewer/document-viewer.component';
 import { ChatInterfaceComponent } from '../chat-interface/chat-interface.component';
+import { DocumentService } from '../../../../shared/services/document.service';
 
 @Component({
   selector: 'app-split-panel',
@@ -19,7 +20,7 @@ import { ChatInterfaceComponent } from '../chat-interface/chat-interface.compone
   template: `
     <mat-sidenav-container class="container">
       <mat-sidenav-content class="document-view">
-        <app-document-viewer></app-document-viewer>
+        <app-document-viewer [documentPath]="documentPath"></app-document-viewer>
       </mat-sidenav-content>
       
       <mat-sidenav #chatDrawer position="end" mode="side" opened class="chat-panel">
@@ -44,13 +45,21 @@ import { ChatInterfaceComponent } from '../chat-interface/chat-interface.compone
   `]
 })
 export class SplitPanelComponent implements OnInit {
-  constructor(private route: ActivatedRoute) {}
+  documentPath: string= '';
+  constructor(private route: ActivatedRoute,private documentService: DocumentService) {}
 
   ngOnInit() {
     this.route.params.subscribe(params => {
       const documentId = params['id'];
       // TODO: Load document using document service
       console.log('Loading document:', documentId);
+      this.getDocumentById(documentId);
+    });
+  }
+
+  getDocumentById(documentId: string) {
+    this.documentService.getDocumentById(documentId).subscribe((response: any) => {
+        this.documentPath = response.storage_path;
     });
   }
 }
