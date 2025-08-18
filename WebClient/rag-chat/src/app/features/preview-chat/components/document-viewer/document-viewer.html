@@ -1,1 +1,96 @@
-<p>document-viewer works!</p>
+<div class="document-viewer-container">
+      <!-- Debug Info (remove in production) -->
+      <!-- <div *ngIf="showDebugInfo" class="debug-info">
+        <p><strong>Debug Info:</strong></p>
+        <p>Document ID: {{ documentId }}</p>
+        <p>Document Path: {{ documentPath }}</p>
+        <p>Document URL: {{ documentUrl ? 'Generated' : 'Not Generated' }}</p>
+        <p>Is PDF: {{ isPdfDocument() }}</p>
+        <p>Is Loading: {{ isLoading }}</p>
+        <p>Has Error: {{ hasError }}</p>
+        <p>PDF Ready: {{ isPdfReady }}</p>
+        <p>Blob Size: {{ blobSize }} bytes</p>
+        <button mat-button (click)="toggleDebugInfo()">Hide Debug</button>
+      </div>
+      <div *ngIf="!showDebugInfo" class="debug-toggle">
+        <button mat-button (click)="toggleDebugInfo()">Show Debug Info</button>
+      </div> -->
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p class="loading-text">Loading document...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="!isLoading && hasError" class="error-container">
+        <mat-card class="error-card">
+          <mat-card-content>
+            <mat-icon class="error-icon">error_outline</mat-icon>
+            <h3>Document not found</h3>
+            <p>{{ errorMessage || 'Unable to load the requested document.' }}</p>
+            <button mat-raised-button color="primary" (click)="retry()">
+              <mat-icon>refresh</mat-icon>
+              Retry
+            </button>
+            <!-- Test blob URL button -->
+            <button mat-button (click)="testBlobUrl()" *ngIf="documentUrl">
+              Test Blob URL
+            </button>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Document Viewer -->
+      <div *ngIf="!isLoading && !hasError && documentUrl" class="viewer-container">
+        <!-- PDF Viewer -->
+        <div *ngIf="isPdfDocument()">
+          <ngx-extended-pdf-viewer
+            [src]="documentUrl"
+            [height]="'100vh'"
+            [showSidebarButton]="false"
+            [showFindButton]="false"
+            [showPagingButtons]="true"
+            [showZoomButtons]="true"
+            [showPresentationModeButton]="false"
+            [showOpenFileButton]="false"
+            [showPrintButton]="false"
+            [showDownloadButton]="false"
+            [showSecondaryToolbarButton]="false"
+            [showRotateButton]="false"
+            [showHandToolButton]="false"
+            [showScrollingButtons]="false"
+            [showSpreadButton]="false"
+            [showPropertiesButton]="false"
+            [zoom]="'auto'"
+            [mobileFriendlyZoom]="'auto'"
+            [ignoreKeyboard]="false"
+            [ignoreKeys]="[]"
+            [logLevel]="1"
+            (pdfLoaded)="onPdfLoaded($event)"
+            (pdfLoadingFailed)="onPdfLoadingFailed($event)"
+            (pdfLoadingStarts)="onPdfLoadingStarts($event)"
+            (progress)="onProgress($event)">
+          </ngx-extended-pdf-viewer>
+        </div>
+
+        <!-- Non-PDF Format -->
+        <div *ngIf="!isPdfDocument()" class="unsupported-format">
+          <mat-card class="unsupported-card">
+            <mat-card-content>
+              <mat-icon class="file-icon">picture_as_pdf</mat-icon>
+              <h3>PDF Preview Only</h3>
+              <p>Only PDF documents can be previewed.</p>
+              <div class="file-info">
+                <p><strong>File:</strong> {{ getFileName() }}</p>
+                <p><strong>Type:</strong> {{ getFileExtension().toUpperCase() }}</p>
+              </div>
+              <button mat-raised-button color="primary" (click)="downloadDocument()">
+                <mat-icon>download</mat-icon>
+                Download File
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </div>
