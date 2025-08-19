@@ -18,7 +18,7 @@ class ChatService:
 
             # Initialize vector store (new API for 0.3.x)
             vector_db = QdrantVectorStore(
-                qdrant_client=qdrant_client,
+                client=qdrant_client,
                 collection_name=collection_name,
                 embedding=self.embedding_model
             )
@@ -89,7 +89,7 @@ Context:
         try:
             
             vector_db = QdrantVectorStore.from_existing_collection(
-                collection_name=collection_name,
+                client=collection_name,
                 embedding=self.embedding_model,
                 url="http://localhost:6333"   # or pass client if supported
             )

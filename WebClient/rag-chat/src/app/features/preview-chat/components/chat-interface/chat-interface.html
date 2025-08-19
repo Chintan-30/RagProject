@@ -1,1 +1,86 @@
-<p>chat-interface works!</p>
+<div class="chat-container">
+      <div class="chat-header" *ngIf="collectionName">
+        <mat-icon>description</mat-icon>
+        <span>Document: {{ collectionName }}</span>
+      </div>
+
+      <div class="messages" #messageContainer>
+        <div *ngFor="let message of messages; trackBy: trackByMessageId" 
+             [class.user-message]="message.isUser"
+             [class.bot-message]="!message.isUser"
+             [class.typing-message]="message.isTyping"
+             [class.error-message]="message.error"
+             class="message">
+          
+          <div class="message-content">
+            <ng-container *ngIf="!message.isTyping">
+              {{ message.content }}
+            </ng-container>
+            <ng-container *ngIf="message.isTyping">
+              <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+                Analyzing document...
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Search Results -->
+          <div *ngIf="message.searchResults && message.searchResults.length > 0" class="search-results">
+            <div class="search-results-header">
+              <mat-icon>search</mat-icon>
+              <span>Source References</span>
+              <!-- <span class="results-count" matBadge="{{ message.searchResults.length }}" matBadgeColor="primary"></span> -->
+            </div>
+            
+            <div class="search-results-container">
+              <mat-card *ngFor="let result of message.searchResults; let i = index" class="search-result-card">
+                <mat-card-header>
+                  <div class="result-meta">
+                    <span class="page-badge">Page {{ result.page_number }}</span>
+                    <span class="score-badge">{{ (result.score * 100) | number:'1.1-1' }}%</span>
+                  </div>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="result-content">{{ result.page_content }}</div>
+                  <div class="result-source">{{ result.source }}</div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+
+          <div class="message-time" *ngIf="!message.isTyping">
+            {{ message.timestamp | date:'shortTime' }}
+          </div>
+        </div>
+      </div>
+      
+      <div class="input-container">
+        <mat-form-field appearance="outline" class="message-input">
+          <mat-label>Ask about the document...</mat-label>
+          <input matInput
+                 [(ngModel)]="newMessage"
+                 (keyup.enter)="sendMessage()"
+                 [disabled]="isLoading || !collectionName"
+                 #messageInput
+                 maxlength="500">
+          <mat-hint align="end">{{ newMessage.length }}/500</mat-hint>
+        </mat-form-field>
+        
+        <button mat-icon-button 
+                color="primary" 
+                (click)="sendMessage()"
+                [disabled]="isLoading || !newMessage.trim() || !collectionName"
+                matTooltip="Send message"
+                class="send-button">
+          <mat-icon *ngIf="!isLoading">send</mat-icon>
+          <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+        </button>
+      </div>
+
+      <div class="status-bar" *ngIf="!collectionName">
+        <mat-icon color="warn">warning</mat-icon>
+        <span>Please select a document collection to start chatting</span>
+      </div>
+    </div>

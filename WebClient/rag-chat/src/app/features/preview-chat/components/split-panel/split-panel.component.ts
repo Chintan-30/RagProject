@@ -26,7 +26,7 @@ import { DocumentService } from '../../../../shared/services/document.service';
       </mat-sidenav-content>
       
       <mat-sidenav #chatDrawer position="end" mode="side" opened class="chat-panel">
-        <app-chat-interface [documentId]="documentId"></app-chat-interface>
+        <app-chat-interface [collectionName]="collectionName"></app-chat-interface>
       </mat-sidenav>
     </mat-sidenav-container>
   `,
@@ -50,6 +50,7 @@ export class SplitPanelComponent implements OnInit {
   documentPath: string = '';
   documentId: string = '';
   isLoading: boolean = true;
+  collectionName: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -69,6 +70,7 @@ export class SplitPanelComponent implements OnInit {
     this.documentService.getDocumentById(documentId).subscribe({
       next: (response: any) => {
         this.documentPath = response.storage_path;
+        this.collectionName = response.collection_name;
         this.isLoading = false;
       },
       error: (error) => {
