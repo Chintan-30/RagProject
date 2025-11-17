@@ -1,24 +1,29 @@
+<!-- Neural Network Background (add this at the top of your component) -->
+<div class="neural-background">
+  <div class="neural-node" *ngFor="let node of neuralNodes" [style.left.px]="node.x" [style.top.px]="node.y"></div>
+</div>
+
 <mat-card class="document-table-card">
   <mat-card-header>
     <mat-card-title>Document Library</mat-card-title>
-    <mat-card-subtitle>Manage your uploaded documents</mat-card-subtitle>
+    <mat-card-subtitle>Manage your uploaded documents with advanced AI-powered interface</mat-card-subtitle>
   </mat-card-header>
 
   <mat-card-content>
-    <!-- Search Filter -->
+    <!-- Enhanced Search Filter -->
     <div class="filter-container">
       <mat-form-field appearance="outline" class="search-field">
         <mat-label>Search documents</mat-label>
-        <input matInput (keyup)="applyFilter($event)" placeholder="Search by name, type, etc.">
+        <input matInput (keyup)="applyFilter($event)" placeholder="Search by name, type, collection...">
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
     </div>
 
-    <!-- Table Container -->
+    <!-- Enhanced Table Container -->
     <div class="table-container">
       <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
 
-        <!-- Filename Column -->
+        <!-- Enhanced Filename Column -->
         <ng-container matColumnDef="filename">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             <mat-icon class="header-icon">description</mat-icon>
@@ -32,7 +37,7 @@
           </td>
         </ng-container>
 
-        <!-- Collection Column -->
+        <!-- Enhanced Collection Column -->
         <ng-container matColumnDef="collection_name">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             <mat-icon class="header-icon">folder</mat-icon>
@@ -41,7 +46,7 @@
           <td mat-cell *matCellDef="let doc"> {{doc.collection_name}} </td>
         </ng-container>
 
-        <!-- Document Count Column -->
+        <!-- Enhanced Document Count Column -->
         <ng-container matColumnDef="document_count">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             <mat-icon class="header-icon">article</mat-icon>
@@ -50,7 +55,7 @@
           <td mat-cell *matCellDef="let doc"> {{doc.document_count}} </td>
         </ng-container>
 
-        <!-- Chunk Count Column -->
+        <!-- Enhanced Chunk Count Column -->
         <ng-container matColumnDef="chunk_count">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             <mat-icon class="header-icon">view_module</mat-icon>
@@ -59,7 +64,7 @@
           <td mat-cell *matCellDef="let doc"> {{doc.chunk_count}} </td>
         </ng-container>
 
-        <!-- File Size Column -->
+        <!-- Enhanced File Size Column -->
         <ng-container matColumnDef="file_size">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             <mat-icon class="header-icon">data_usage</mat-icon>
@@ -68,7 +73,7 @@
           <td mat-cell *matCellDef="let doc"> {{formatSize(doc.file_size)}} </td>
         </ng-container>
 
-        <!-- Upload Date Column -->
+        <!-- Enhanced Upload Date Column -->
         <ng-container matColumnDef="upload_date">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>
             <mat-icon class="header-icon">schedule</mat-icon>
@@ -77,7 +82,7 @@
           <td mat-cell *matCellDef="let doc"> {{doc.upload_date | date:'medium'}} </td>
         </ng-container>
 
-        <!-- Actions Column -->
+        <!-- Enhanced Actions Column -->
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef class="actions-header">
             <mat-icon class="header-icon">settings</mat-icon>
@@ -97,12 +102,12 @@
           </td>
         </ng-container>
 
-        <!-- Table Rows -->
+        <!-- Enhanced Table Rows -->
         <tr mat-header-row *matHeaderRowDef="displayedColumns" class="table-header"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
       </table>
 
-      <!-- No Data Message -->
+      <!-- Enhanced No Data Message -->
       <div *ngIf="dataSource.data.length === 0" class="no-data">
         <mat-icon class="no-data-icon">folder_open</mat-icon>
         <h3>No documents found</h3>
@@ -110,16 +115,16 @@
       </div>
     </div>
     
-    <!-- Paginator -->
+    <!-- Enhanced Paginator -->
     <mat-paginator 
-  [length]="totalRecords" 
-  [pageSize]="pageSize" 
-  [pageSizeOptions]="[5, 10, 20, 50]" 
-  [pageIndex]="pageNumber - 1"
-  showFirstLastButtons
-  aria-label="Select page of documents" 
-  (page)="onPageChange($event)">
-</mat-paginator>
+      [length]="totalRecords" 
+      [pageSize]="pageSize" 
+      [pageSizeOptions]="[5, 10, 20, 50]" 
+      [pageIndex]="pageNumber - 1"
+      showFirstLastButtons
+      aria-label="Select page of documents" 
+      (page)="onPageChange($event)">
+    </mat-paginator>
 
-</mat-card-content>
+  </mat-card-content>
 </mat-card>

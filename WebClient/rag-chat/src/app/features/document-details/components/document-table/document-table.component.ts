@@ -51,7 +51,7 @@ export class DocumentTableComponent implements OnInit, AfterViewInit {
     'upload_date',
     'actions'
   ];
-
+  neuralNodes: Array<{x: number, y: number}> = [];
   dataSource: MatTableDataSource<DocumentInfo>;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -67,6 +67,16 @@ export class DocumentTableComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.dataSource.paginator = this.paginator;
     this.getAllDocuments(this.pageNumber, this.pageSize);
+    this.initializeNeuralBackground();
+
+  }
+
+  initializeNeuralBackground() {
+    const nodeCount = 25;
+    this.neuralNodes = Array.from({length: nodeCount}, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight
+    }));
   }
 
   getAllDocuments(pageNumber: number, pageSize: number) {
