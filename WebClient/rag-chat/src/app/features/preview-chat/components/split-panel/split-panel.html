@@ -1,1 +1,11 @@
-<p>split-panel works!</p>
+<mat-sidenav-container class="container">
+  <mat-sidenav-content class="document-view">
+    <app-document-viewer 
+      [documentId]="documentId">
+    </app-document-viewer>
+  </mat-sidenav-content>
+  
+  <mat-sidenav #chatDrawer position="end" mode="side" opened class="chat-panel">
+    <app-chat-interface [collectionName]="collectionName"></app-chat-interface>
+  </mat-sidenav>
+</mat-sidenav-container>

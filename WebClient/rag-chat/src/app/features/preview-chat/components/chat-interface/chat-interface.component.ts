@@ -49,7 +49,7 @@ export class ChatInterfaceComponent {
   @Input() documentId: string = '';
   @Input() collectionName: string = '';
   @Input() maxResults: number = 4;
-  @Input() model: string = 'gpt-4.1';
+  model: string = '';
   
   messages: ChatMessage[] = [];
   newMessage = '';
@@ -63,6 +63,9 @@ export class ChatInterfaceComponent {
   ) {}
 
   ngOnInit() {
+    this.chatService.getChatModel().subscribe(response => {
+      this.model = response.model;
+    });
     if (this.collectionName) {
       this.addWelcomeMessage();
     }
@@ -124,6 +127,12 @@ export class ChatInterfaceComponent {
           this.handleChatError(error, typingMessage.id);
         }
       });
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      this.snackBar.open('Copied to clipboard!', 'Close', { duration: 2000 });
+    });
   }
 
   private handleChatResponse(response: any, typingMessageId: string) {

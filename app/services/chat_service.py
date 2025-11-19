@@ -1,29 +1,39 @@
-from openai import OpenAI
+import google.generativeai as genai                 # <-- CHANGED: Import Google's client
 from langchain_qdrant import QdrantVectorStore
-from langchain_openai import OpenAIEmbeddings
-from app.config import OPENAI_API_KEY
+from langchain_google_genai import GoogleGenerativeAIEmbeddings  # <-- CHANGED: Import Google's embedding model
 from app.utils.logger import logger
 from qdrant_client import QdrantClient
+import os                                           # <-- CHANGED: Need this for the API key
+from app.config import CHAT_MODEL_NAME, EMBEDDING_MODEL_NAME
+
+# Removed: from openai import OpenAI
+# Removed: from langchain_openai import OpenAIEmbeddings
+# Removed: from app.config import OPENAI_API_KEY
 
 
 class ChatService:
     def __init__(self):
-        self.openai_client = OpenAI()
-        self.embedding_model = OpenAIEmbeddings(model="text-embedding-3-large")
+        # MIGRATED_TO_GEMINI on 2025-11-18 by auto-migration
+        try:
+            genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+        except Exception as e:
+            logger.error(f"Error configuring Google AI: {str(e)}")
+            raise
 
-    async def get_answer(self, query: str, collection_name: str, max_results: int = 4, model: str = "gpt-4.1"):
+        self.chat_model_name = CHAT_MODEL_NAME
+        self.embedding_model = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL_NAME)
+
+    async def get_answer(self, query: str, collection_name: str, max_results: int = 4, model: str = None):
         """Get an AI-generated answer based on document context"""
         try:
             qdrant_client = QdrantClient(url="http://localhost:6333")
 
-            # Initialize vector store (new API for 0.3.x)
             vector_db = QdrantVectorStore(
                 client=qdrant_client,
                 collection_name=collection_name,
                 embedding=self.embedding_model
             )
 
-            # Perform similarity search
             search_results = vector_db.similarity_search_with_score(
                 query=query,
                 k=max_results
@@ -32,7 +42,6 @@ class ChatService:
             if not search_results:
                 return None, []
 
-            # Format search results and prepare context
             formatted_results = []
             context_parts = []
             
@@ -48,7 +57,6 @@ class ChatService:
 
             context = "\n\n---\n\n".join(context_parts)
 
-            # Create system prompt
             system_prompt = f"""You are a helpful AI assistant that answers user queries based on the available context 
 retrieved from a PDF file along with page contents and page numbers.
 
@@ -64,21 +72,12 @@ Important guidelines:
 
 Context:
 {context}"""
-
-            # Get AI response
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": query}
-            ]
-
-            response = self.openai_client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=0.7,
-                max_tokens=800
-            )
-
-            return response.choices[0].message.content, formatted_results
+            # MIGRATED_TO_GEMINI on 2025-11-18 by auto-migration
+            chat_model = genai.GenerativeModel(model if model else self.chat_model_name)
+            payload = f"{system_prompt}\n\nUser Query: {query}"
+            resp = await chat_model.generate_content_async(payload, generation_config=genai.GenerationConfig(temperature=0.7, max_output_tokens=800))
+            
+            return resp.text, formatted_results
 
         except Exception as e:
             logger.error(f"Error in get_answer: {str(e)}")
@@ -87,13 +86,13 @@ Context:
     async def get_sample_questions(self, collection_name: str, limit: int = 3):
         """Generate sample questions for a collection"""
         try:
+            qdrant_client = QdrantClient(url="http://localhost:6333")
             
-            vector_db = QdrantVectorStore.from_existing_collection(
-                client=collection_name,
+            vector_db = QdrantVectorStore(
+                client=qdrant_client,
+                collection_name=collection_name,
                 embedding=self.embedding_model,
-                url="http://localhost:6333"   # or pass client if supported
             )
-
 
             sample_docs = vector_db.similarity_search("", k=2)
             
@@ -102,19 +101,16 @@ Context:
 
             sample_content = sample_docs[0].page_content[:500]
             
-            messages = [
-                {"role": "system", "content": "Generate 3 interesting and specific questions that could be asked about this content. Return only the questions, one per line."},
-                {"role": "user", "content": sample_content}
-            ]
-
-            response = self.openai_client.chat.completions.create(
-                model="gpt-4.1",
-                messages=messages,
-                temperature=0.7,
-                max_tokens=200
+            # MIGRATED_TO_GEMINI on 2025-11-18 by auto-migration
+            system_prompt_questions = "Generate 3 interesting and specific questions that could be asked about this content. Return only the questions, one per line."
+            
+            model = genai.GenerativeModel(self.chat_model_name)
+            response = await model.generate_content_async(
+                f"{system_prompt_questions}\n\nContent: {sample_content}",
+                generation_config=genai.GenerationConfig(temperature=0.7, max_output_tokens=200)
             )
 
-            questions = response.choices[0].message.content.strip().split("\n")
+            questions = response.text.strip().split("\n")
             return questions[:limit]
 
         except Exception as e:

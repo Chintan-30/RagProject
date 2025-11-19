@@ -30,6 +30,7 @@ class Document(Base):
     id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     collection_name = Column(String(255), nullable=False, index=True)
     filename = Column(String(255), nullable=False)
+    file_type = Column(String(50), nullable=True)
     document_count = Column(Integer, nullable=False, default=1)
     chunk_count = Column(Integer, nullable=False, default=0)
     file_size = Column(BigInteger, nullable=True)
@@ -176,7 +177,8 @@ class DBService:
     async def insert_document(
         self, 
         collection_name: str, 
-        filename: str, 
+        filename: str,
+        file_type: str = None,
         document_count: int = 1,
         chunk_count: int = 0,
         file_size: int = None,
@@ -190,6 +192,7 @@ class DBService:
             doc = Document(
                 collection_name=collection_name,
                 filename=filename,
+                file_type=file_type,
                 document_count=document_count,
                 chunk_count=chunk_count,
                 file_size=file_size,

@@ -6,7 +6,7 @@ import logging
 
 from app.routers import chat_router, indexing_router, filescrud_router
 from app.utils.logger import logger
-from app.services.dbservices import DBService
+from app.services.dbservices import DBService, Document
 
 # Global DB service instance
 db_service = None
@@ -21,7 +21,15 @@ async def lifespan(app: FastAPI):
     try:
         db_service = DBService()
         await db_service.init_db()
+
+        # Drop the documents table
+        async with db_service.engine.begin() as conn:
+            await conn.run_sync(Document.metadata.drop_all)
         
+        # Create the documents table
+        async with db_service.engine.begin() as conn:
+            await conn.run_sync(Document.metadata.create_all)
+
         # Test connection
         connection_ok = await db_service.test_connection()
         if not connection_ok:

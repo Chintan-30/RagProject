@@ -1,0 +1,13 @@
+.container {
+  width: 100%;
+  height: calc(100vh - 64px); // Adjust height to account for the toolbar
+}
+
+.document-view {
+  padding: 20px;
+}
+
+.chat-panel {
+  width: 400px;
+  border-left: 1px solid #ccc;
+}

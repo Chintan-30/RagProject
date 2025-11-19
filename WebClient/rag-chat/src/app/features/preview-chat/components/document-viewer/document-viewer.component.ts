@@ -25,6 +25,7 @@ export class DocumentViewerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() documentId: string = '';
   documentPath: string = '';
   documentUrl: string = '';
+  documentType: string = '';
   hasError: boolean = false;
   errorMessage: string = '';
   isLoading: boolean = false;
@@ -86,6 +87,7 @@ export class DocumentViewerComponent implements OnInit, OnChanges, OnDestroy {
     this.blobSize = 0;
     this.cleanupBlobUrl();
     this.documentPath = '';
+    this.documentType = '';
     this.setLoadingState(false);
     this.clearTimeouts();
   }
@@ -135,6 +137,7 @@ export class DocumentViewerComponent implements OnInit, OnChanges, OnDestroy {
     this.documentService.getDocumentById(documentId).subscribe({
       next: (response: any) => {
         this.documentPath = response.storage_path;
+        this.documentType = response.file_type;
         this.loadDocumentAsBlob();
       },
       error: (error) => {
@@ -205,8 +208,13 @@ export class DocumentViewerComponent implements OnInit, OnChanges, OnDestroy {
             this.cdr.detectChanges();
           }, 100);
           
+        } else if (this.isImageDocument()) {
+          this.isPdfReady = false; // Not a PDF
+          this.isLoading = false;
+          this.setLoadingState(false);
+          this.validateDocument();
         } else {
-          this.isPdfReady = true;
+          this.isPdfReady = false;
           this.isLoading = false;
           this.setLoadingState(false);
           this.validateDocument();
@@ -239,12 +247,11 @@ export class DocumentViewerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   isPdfDocument(): boolean {
-    const extension = this.getFileExtension().toLowerCase();
-    return extension === '.pdf';
+    return this.documentType === 'pdf';
   }
 
   isImageDocument(): boolean {
-    return false;
+    return this.documentType === 'image';
   }
 
   getFileName(): string {

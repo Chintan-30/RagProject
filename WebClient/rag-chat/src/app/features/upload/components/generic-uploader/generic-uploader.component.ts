@@ -7,6 +7,9 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgxFileDropModule, FileSystemFileEntry, NgxFileDropEntry } from 'ngx-file-drop';
 import { DocumentService } from '../../../../shared/services/document.service';
 import { HttpEventType } from '@angular/common/http';
+import { MaterialModule } from '../../../../shared/material.module';
+import { MatListModule } from "@angular/material/list"; // Import MaterialModule
+
 
 interface UploadState {
   id: string;
@@ -25,8 +28,11 @@ interface UploadState {
     MatButtonModule,
     MatProgressBarModule,
     MatSnackBarModule,
-    NgxFileDropModule
-  ],
+    NgxFileDropModule,
+    MaterialModule // Use MaterialModule
+    ,
+    MatListModule
+],
   templateUrl: './generic-uploader.html',
   styleUrls: ['./generic-uploader.scss']
 })

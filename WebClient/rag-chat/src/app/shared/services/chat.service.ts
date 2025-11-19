@@ -17,11 +17,15 @@ export class ChatService {
 
   constructor(private http: HttpClient) {}
 
-sendMessage(
+  getChatModel(): Observable<{model: string}> {
+    return this.http.get<{model: string}>(`${this.apiUrl}/model`);
+  }
+
+  sendMessage(
     query: string, 
     collectionName: string, 
     maxResults: number = 4, 
-    model: string = 'gpt-4.1'
+    model: string
   ): Observable<any> {
     const request: any = {
       query: query.trim(),

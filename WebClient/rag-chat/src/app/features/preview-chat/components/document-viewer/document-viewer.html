@@ -74,13 +74,18 @@
           </ngx-extended-pdf-viewer>
         </div>
 
+        <!-- Image Viewer -->
+        <div *ngIf="isImageDocument()" class="image-viewer">
+          <img [src]="documentUrl" (load)="onImageLoaded()" (error)="onImageLoadError()" alt="Document Image">
+        </div>
+
         <!-- Non-PDF Format -->
-        <div *ngIf="!isPdfDocument()" class="unsupported-format">
+        <div *ngIf="!isPdfDocument() && !isImageDocument()" class="unsupported-format">
           <mat-card class="unsupported-card">
             <mat-card-content>
-              <mat-icon class="file-icon">picture_as_pdf</mat-icon>
-              <h3>PDF Preview Only</h3>
-              <p>Only PDF documents can be previewed.</p>
+              <mat-icon class="file-icon">insert_drive_file</mat-icon>
+              <h3>Unsupported Format</h3>
+              <p>Only PDF and image documents can be previewed.</p>
               <div class="file-info">
                 <p><strong>File:</strong> {{ getFileName() }}</p>
                 <p><strong>Type:</strong> {{ getFileExtension().toUpperCase() }}</p>

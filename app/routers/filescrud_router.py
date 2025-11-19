@@ -23,6 +23,7 @@ class DocumentResponse(BaseModel):
     id: str
     collection_name: str
     filename: str
+    file_type: Optional[str] = None
     document_count: int
     chunk_count: int
     file_size: Optional[int]

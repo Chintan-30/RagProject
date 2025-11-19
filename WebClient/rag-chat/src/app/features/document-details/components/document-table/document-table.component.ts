@@ -16,6 +16,7 @@ interface DocumentInfo {
   id: string;
   collection_name?: string;
   filename?: string;
+  file_type?: string;
   document_count?: number;
   chunk_count?: number;
   file_size?: number;
@@ -133,24 +134,13 @@ export class DocumentTableComponent implements OnInit, AfterViewInit {
 
 
   getFileIcon(type: string): string {
+    if (!type) {
+        return 'insert_drive_file';
+    }
     switch (type.toLowerCase()) {
       case 'pdf':
         return 'picture_as_pdf';
-      case 'docx':
-      case 'doc':
-        return 'description';
-      case 'xlsx':
-      case 'xls':
-        return 'table_chart';
-      case 'pptx':
-      case 'ppt':
-        return 'slideshow';
-      case 'txt':
-        return 'text_snippet';
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
+      case 'image':
         return 'image';
       default:
         return 'insert_drive_file';

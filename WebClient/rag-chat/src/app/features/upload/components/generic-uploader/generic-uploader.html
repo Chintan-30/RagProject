@@ -10,7 +10,7 @@
           [showBrowseBtn]="true"
           browseBtnLabel="Choose files"
           [multiple]="true"
-          accept=".pdf,.txt,.csv,.xlsx">
+          accept=".pdf,.jpeg,.jpg,.png,.webp">
           <ng-template ngx-file-drop-content-tmp let-openFileSelector="openFileSelector">
             <button mat-raised-button color="primary" (click)="openFileSelector()">
               Choose Files
@@ -19,30 +19,28 @@
         </ngx-file-drop>
         
         <!-- Upload Progress Section -->
-        @if (uploads.length > 0) {
-          <div class="upload-progress">
-            <h3>Upload Progress</h3>
-            @for (upload of uploads; track upload.id) {
-              <div class="upload-item">
-                <div class="upload-info">
-                  <span class="file-name">{{ upload.fileName }}</span>
-                  <span class="upload-status" [ngClass]="upload.status">
-                    {{ getStatusText(upload.status) }}
-                  </span>
-                </div>
-                @if (upload.status === 'uploading') {
-                  <mat-progress-bar 
-                    mode="indeterminate">
-                  </mat-progress-bar>
-                }
-                @if (upload.status === 'error') {
-                  <div class="error-message">
-                    Upload failed. Please try again.
-                  </div>
-                }
+        <div *ngIf="uploads.length > 0" class="upload-progress">
+          <h3>Upload Progress</h3>
+          <mat-list>
+            <mat-list-item *ngFor="let upload of uploads">
+              <mat-icon mat-list-icon>
+                <ng-container [ngSwitch]="upload.status">
+                  <mat-icon *ngSwitchCase="'uploading'">hourglass_top</mat-icon>
+                  <mat-icon *ngSwitchCase="'success'">check_circle</mat-icon>
+                  <mat-icon *ngSwitchCase="'error'">error</mat-icon>
+                </ng-container>
+              </mat-icon>
+              <div mat-line>{{ upload.fileName }}</div>
+              <div mat-line>
+                <mat-progress-bar
+                  *ngIf="upload.status === 'uploading'"
+                  mode="indeterminate">
+                </mat-progress-bar>
+                <span *ngIf="upload.status !== 'uploading'">{{ getStatusText(upload.status) }}</span>
               </div>
-            }
-          </div>
-        }
+            </mat-list-item>
+          </mat-list>
+          <button mat-button (click)="clearCompletedUploads()">Clear Completed</button>
+        </div>
       </mat-card-content>
     </mat-card>

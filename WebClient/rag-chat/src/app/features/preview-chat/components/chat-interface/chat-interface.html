@@ -12,19 +12,22 @@
              [class.error-message]="message.error"
              class="message">
           
-          <div class="message-content">
-            <ng-container *ngIf="!message.isTyping">
-              {{ message.content }}
-            </ng-container>
-            <ng-container *ngIf="message.isTyping">
-              <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-                Analyzing document...
-              </div>
-            </ng-container>
-          </div>
+        <div class="message-content">
+          <ng-container *ngIf="!message.isTyping">
+            {{ message.content }}
+            <button mat-icon-button *ngIf="!message.isUser" (click)="copyToClipboard(message.content)" matTooltip="Copy message">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+          </ng-container>
+          <ng-container *ngIf="message.isTyping">
+            <div class="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+              Analyzing document...
+            </div>
+          </ng-container>
+        </div>
 
           <!-- Search Results -->
           <div *ngIf="message.searchResults && message.searchResults.length > 0" class="search-results">

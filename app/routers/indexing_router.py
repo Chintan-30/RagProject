@@ -4,11 +4,12 @@ from typing import Optional
 from app.models.indexing_models import UploadResponse, CollectionsResponse
 from app.services.dbservices import Document,DBService, get_db_service
 from app.services.indexing_service import IndexingService
-from app.config import MAX_FILE_SIZE
+from app.config import MAX_FILE_SIZE, CHAT_MODEL_NAME
 from app.utils.logger import logger
 from pathlib import Path
 import uuid
 from datetime import datetime
+import mimetypes
 
 router = APIRouter(
     prefix="/indexing",
@@ -17,31 +18,27 @@ router = APIRouter(
 
 indexing_service = IndexingService()
 
-async def get_db_service() -> DBService:
-    """Get the global database service instance"""
-    from app.main import db_service
-    if db_service is None:
-        raise HTTPException(status_code=503, detail="Database service not initialized")
-    return db_service
-
 
 @router.post("/upload", response_model=UploadResponse)
-async def upload_pdf(
+async def upload_file(
     file: UploadFile = File(...),
     collection_name: Optional[str] = Query(None, description="Custom collection name (optional)"),
-    chunk_size: int = Query(1000, ge=100, le=2000, description="Text chunk size"),
-    chunk_overlap: int = Query(400, ge=0, le=500, description="Text chunk overlap"),
+    chunk_size: int = Query(1000, ge=100, le=2000, description="Text chunk size for PDFs"),
+    chunk_overlap: int = Query(400, ge=0, le=500, description="Text chunk overlap for PDFs"),
     db_service: DBService = Depends(get_db_service)
 ):
-    """Upload and index a PDF document"""
+    """Upload and index a PDF or image document"""
     
     # Validate file type
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+    file_type, _ = mimetypes.guess_type(file.filename)
+    if file_type not in ["application/pdf", "image/jpeg", "image/png", "image/webp"]:
+        raise HTTPException(status_code=400, detail="Only PDF, JPEG, PNG, and WEBP files are allowed.")
 
     # Read and validate file size
     try:
         contents = await file.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail="File is empty.")
         if len(contents) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=400, 
@@ -70,20 +67,35 @@ async def upload_pdf(
         
         logger.info(f"File saved to: {file_path}")
         
-        # Process the PDF using your indexing service
-        collection_name, doc_count, chunk_count = await indexing_service.process_pdf(
-            file_content=contents,
-            filename=file.filename,
-            collection_name=collection_name,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
-        )
-        
+        if file_type == "application/pdf":
+            # Process the PDF using your indexing service
+            collection_name, doc_count, chunk_count = await indexing_service.process_pdf(
+                file_content=contents,
+                filename=file.filename,
+                collection_name=collection_name,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap
+            )
+            file_type_for_db = "pdf"
+        else: # It's an image
+            # Get image description
+            description = await indexing_service.process_image(contents, file.filename, collection_name)
+            
+            # Embed the description
+            # collection_name, doc_count, chunk_count = await indexing_service.process_text(
+            #     text=description,
+            #     filename=file.filename,
+            #     collection_name=collection_name
+            # )
+            file_type_for_db = "image"
+            collection_name, doc_count, chunk_count = description # description now returns collection_name, doc_count, chunk_count
+
         # Insert document record into database with file path
         document_id = await db_service.insert_document(
             collection_name=collection_name,
             filename=file.filename,
-            storage_path=str(file_path),         # Store full file path
+            file_type=file_type_for_db,
+            storage_path=str(file_path),
             document_count=doc_count,
             chunk_count=chunk_count,
             file_size=len(contents)
@@ -116,8 +128,8 @@ async def upload_pdf(
         # Clean up file if it was created but something went wrong
         if 'file_path' in locals() and file_path.exists():
             file_path.unlink()
-        logger.error(f"Error processing PDF {file.filename}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
+        logger.error(f"Error processing file {file.filename}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
     
     
 @router.get("/collections", response_model=CollectionsResponse)

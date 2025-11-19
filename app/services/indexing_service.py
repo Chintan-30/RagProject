@@ -2,18 +2,102 @@ import uuid
 from pathlib import Path
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_qdrant import QdrantVectorStore
-from app.config import UPLOAD_DIR
+from app.config import UPLOAD_DIR, EMBEDDING_MODEL_NAME, CHAT_MODEL_NAME
 from app.utils.qdrant_client import get_qdrant_client
 from app.utils.logger import logger
 from app.config import QDRANT_URL
 import json
+import google.generativeai as genai
 
 
 class IndexingService:
     def __init__(self):
-        self.embedding_model = OpenAIEmbeddings(model="text-embedding-3-large")
+        self.embedding_model = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL_NAME)
+        # Initialize the multimodal model for image description
+        self.multimodal_model = genai.GenerativeModel(CHAT_MODEL_NAME)
+
+    async def process_image(self, image_content: bytes, filename: str, collection_name: str):
+        """
+        Processes an image, generates a description, and indexes it.
+        """
+        prompt = "Describe the image in detail. What is the image about? What does it show? What is happening in the image?"
+        try:
+            response = await self.multimodal_model.generate_content_async([prompt, {"mime_type": "image/jpeg", "data": image_content}])
+            description = response.text
+            logger.info(f"Generated description for {filename}: {description[:100]}...")
+            
+            # Now process this description as text
+            return await self.process_text(text=description, filename=filename, collection_name=collection_name)
+        except Exception as e:
+            logger.error(f"Error processing image {filename}: {str(e)}")
+            raise
+
+    async def process_text(self, text: str, filename: str, collection_name: str):
+        """Process and index a text"""
+        if collection_name == 'default':
+            final_collection_name = self.sanitize_collection_name(filename)
+        else:
+            final_collection_name = collection_name
+        logger.info(f"Processing text from: {filename} -> Collection: {final_collection_name}")
+
+        from langchain_core.documents import Document
+        doc = Document(page_content=text, metadata={"source": filename})
+        
+        # DEBUG: Print collection name and document info
+        logger.info(f"Final collection name: {final_collection_name}")
+        logger.info(f"Number of documents to store: 1")
+        logger.info(f"Sample document metadata: {doc.metadata}")
+        
+        # RECOMMENDED APPROACH: Use direct client method
+        try:
+            from qdrant_client import QdrantClient
+            client = QdrantClient(url=QDRANT_URL)
+            
+            # Create vector store instance with specific collection
+            vector_store = QdrantVectorStore(
+                client=client,
+                collection_name=final_collection_name,
+                embedding=self.embedding_model,
+            )
+            
+            # Add documents to the specific collection
+            vector_store.add_documents(documents=[doc])
+            logger.info(f"Documents added to collection '{final_collection_name}' using direct method")
+            
+        except Exception as e:
+            logger.error(f"Error with direct client approach: {str(e)}")
+            # Fallback to from_documents method
+            logger.info("Falling back to from_documents method")
+            vector_store = QdrantVectorStore.from_documents(
+                documents=[doc],
+                embedding=self.embedding_model,
+                url=QDRANT_URL,
+                collection_name=final_collection_name,
+                force_recreate=False,
+            )
+        
+        logger.info(f"Successfully indexed text from {filename} in collection '{final_collection_name}'")
+        
+        # Verify the collection was created correctly
+        try:
+            from qdrant_client import QdrantClient
+            client = QdrantClient(url=QDRANT_URL)
+            collections = client.get_collections()
+            collection_names = [col.name for col in collections.collections]
+            logger.info(f"Available collections: {collection_names}")
+            
+            if final_collection_name in collection_names:
+                collection_info = client.get_collection(final_collection_name)
+                logger.info(f"Collection '{final_collection_name}' has {collection_info.points_count} points")
+            else:
+                logger.warning(f"Collection '{final_collection_name}' not found in available collections!")
+                
+        except Exception as e:
+            logger.warning(f"Could not verify collection creation: {str(e)}")
+        
+        return final_collection_name, 1, 1
 
     async def process_pdf(self, file_content: bytes, filename: str, collection_name: str, 
                          chunk_size: int = 1000, chunk_overlap: int = 400):

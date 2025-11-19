@@ -3,6 +3,7 @@ from app.models.chat_models import ChatRequest, ChatResponse
 from app.services.chat_service import ChatService
 from app.utils.qdrant_client import get_qdrant_client
 from app.utils.logger import logger
+from app.config import CHAT_MODEL_NAME
 
 router = APIRouter(
     prefix="/chat",
@@ -10,6 +11,11 @@ router = APIRouter(
 )
 
 chat_service = ChatService()
+
+@router.get("/model")
+async def get_chat_model():
+    """Get the current chat model name"""
+    return {"model": CHAT_MODEL_NAME}
 
 @router.post("", response_model=ChatResponse)
 async def chat_with_pdf(request: ChatRequest):
@@ -26,11 +32,12 @@ async def chat_with_pdf(request: ChatRequest):
             )
 
         # Get answer from service
+        model_to_use = request.model if request.model else chat_service.chat_model_name
         answer, search_results = await chat_service.get_answer(
             query=request.query,
             collection_name=request.collection_name,
             max_results=request.max_results,
-            model=request.model
+            model=model_to_use
         )
 
         if not answer:
@@ -44,7 +51,7 @@ async def chat_with_pdf(request: ChatRequest):
             query=request.query,
             collection_name=request.collection_name,
             search_results=search_results,
-            model_used=request.model
+            model_used=model_to_use
         )
 
     except HTTPException:
